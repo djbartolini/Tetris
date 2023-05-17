@@ -107,4 +107,40 @@ public class Tetromino {
 
         return m;
     }
+
+    public Tetromino rotateLeft() {
+
+        if (pieceShape == Shape.SQUARE_SHAPE) {
+            return this;
+        }
+
+        var result = new Tetromino();
+        result.pieceShape = pieceShape;
+
+        for (int i = 0; i < 4; ++i) {
+
+            result.setX(i, getY(i));
+            result.setY(i, -getX(i));
+        }
+
+        return result;
+    }
+
+    public Tetromino rotateRight() {
+
+        if (pieceShape == Shape.SQUARE_SHAPE) {
+            return this;
+        }
+
+        var result = new Tetromino();
+        result.pieceShape = pieceShape;
+
+        for (int i = 0; i < 4; ++i) {
+
+            result.setX(i, -getY(i));
+            result.setY(i, getX(i));
+        }
+
+        return result;
+    }
 }

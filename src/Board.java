@@ -1,11 +1,21 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class Board extends JPanel {
 
     // Constant values for width and height in number of blocks
     private final int BOARD_WIDTH = 10;
     private final int BOARD_HEIGHT = 20;
+
+    private final int PERIOD_INTERVAL = 500;
+    private Timer timer;
+
+    private boolean isAtBottom = false;
+    private int numLinesCleared = 0;
 
     // Keeps track of the current 'new' piece
     private Tetromino curPiece;
@@ -88,8 +98,6 @@ public class Board extends JPanel {
         // Draw our grid lines for the board
         g.drawLine(x + 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + getSquareHeight() - 1);
         g.drawLine(x + getSquareWidth() - 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + 1);
-
-
     }
 
     private void clearBoard() {
@@ -126,10 +134,10 @@ public class Board extends JPanel {
                 return false;
             }
 
-//            if (shapeAt(x, y) != Tetromino.Shape.NO_SHAPE) {
-//
-//                return false;
-//            }
+            if (shapeAt(x, y) != Tetromino.Shape.NO_SHAPE) {
+
+                return false;
+            }
         }
 
         curPiece = newPiece;
@@ -141,6 +149,118 @@ public class Board extends JPanel {
         return true;
     }
 
+    private void pieceDropped() {
+
+        for (int i = 0; i < 4; i++) {
+
+            int x = curX + curPiece.getX(i);
+            int y = curY - curPiece.getY(i);
+            board[(y * BOARD_WIDTH) + x] = curPiece.getShape();
+        }
+
+        removeFullLines();
+
+        if (!isAtBottom) {
+
+            newPiece();
+        }
+    }
+
+    private void oneLineDown() {
+
+        if (!tryMove(curPiece, curX, curY - 1)) {
+
+            pieceDropped();
+        }
+    }
+
+    private void removeFullLines() {
+
+        int numFullLines = 0;
+
+        for (int i = BOARD_HEIGHT - 1; i >= 0; i--) {
+
+            boolean lineIsFull = true;
+
+            for (int j = 0; j < BOARD_WIDTH; j++) {
+
+                if (shapeAt(j, i) == Tetromino.Shape.NO_SHAPE) {
+
+                    lineIsFull = false;
+                    break;
+                }
+            }
+
+            if (lineIsFull) {
+
+                numFullLines++;
+
+                for (int k = i; k < BOARD_HEIGHT - 1; k++) {
+                    for (int j = 0; j < BOARD_WIDTH; j++) {
+                        board[(k * BOARD_WIDTH) + j] = shapeAt(j, k + 1);
+                    }
+                }
+            }
+        }
+
+        if (numFullLines > 0) {
+
+            numLinesCleared += numFullLines;
+
+//            statusbar.setText(String.valueOf(numLinesCleared));
+            isAtBottom = true;
+            curPiece.setShape(Tetromino.Shape.NO_SHAPE);
+        }
+    }
+
+    private class GameCycle implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            doGameCycle();
+        }
+    }
+
+    private void doGameCycle() {
+        update();
+        repaint();
+    }
+
+    private void update() {
+
+        if (isAtBottom) {
+            isAtBottom = false;
+            newPiece();
+        } else {
+            oneLineDown();
+        }
+    }
+
+    class TAdapter extends KeyAdapter {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+
+            if (curPiece.getShape() == Tetromino.Shape.NO_SHAPE) {
+
+                return;
+            }
+
+            int keycode = e.getKeyCode();
+
+            // Java 12 switch expressions
+            switch (keycode) {
+
+                case KeyEvent.VK_LEFT -> tryMove(curPiece, curX - 1, curY);
+                case KeyEvent.VK_RIGHT -> tryMove(curPiece, curX + 1, curY);
+                case KeyEvent.VK_DOWN -> tryMove(curPiece.rotateRight(), curX, curY);
+                case KeyEvent.VK_UP -> tryMove(curPiece.rotateLeft(), curX, curY);
+                case KeyEvent.VK_SPACE -> dropDown();
+                case KeyEvent.VK_D -> oneLineDown();
+            }
+        }
+    }
+
     void start() {
 
         curPiece = new Tetromino();
@@ -148,5 +268,8 @@ public class Board extends JPanel {
 
         clearBoard();
         newPiece();
+
+        timer = new Timer(PERIOD_INTERVAL, new GameCycle());
+        timer.start();
     }
 }
