@@ -19,6 +19,8 @@ public class Tetris extends JFrame {
         setSize(400, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        board.start();
     }
 
     public static void main(String[] args) {
