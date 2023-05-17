@@ -11,7 +11,7 @@ public class Board extends JPanel {
     private final int BOARD_WIDTH = 10;
     private final int BOARD_HEIGHT = 20;
 
-    private final int PERIOD_INTERVAL = 500;
+    private final int PERIOD_INTERVAL = 400;
     private Timer timer;
 
     private boolean isAtBottom = false;
@@ -31,6 +31,7 @@ public class Board extends JPanel {
     // Initializes the board
     public void initBoard(Tetris game) {
         setFocusable(true);
+        addKeyListener(new TAdapter());
     }
 
     // Gets the height of each block (square)
@@ -100,6 +101,20 @@ public class Board extends JPanel {
         g.drawLine(x + getSquareWidth() - 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + 1);
     }
 
+    // Key command to drop piece 1 block level
+    private void dropDown() {
+        int newY = curY;
+
+        while (newY > 0) {
+            if (!tryMove(curPiece, curX, newY - 1)) {
+                break;
+            }
+            newY--;
+        }
+
+        pieceDropped();
+    }
+
     private void clearBoard() {
 
         for (int i = 0; i < BOARD_HEIGHT * BOARD_WIDTH; i++) {
@@ -108,6 +123,8 @@ public class Board extends JPanel {
         }
     }
 
+    // Set curPiece to our new shape
+    // Change to corresponding new shape on player move
     private void newPiece() {
 
         curPiece.setRandomShape();
@@ -118,10 +135,11 @@ public class Board extends JPanel {
 
             curPiece.setShape(Tetromino.Shape.NO_SHAPE);
 
-            var msg = String.format("Game over. Score: %d", 0);
+//            var msg = String.format("Game over. Score: %d", 0);
         }
     }
 
+    // return true if move is within window bounds
     private boolean tryMove(Tetromino newPiece, int newX, int newY) {
 
         for (int i = 0; i < 4; i++) {
@@ -161,11 +179,11 @@ public class Board extends JPanel {
         removeFullLines();
 
         if (!isAtBottom) {
-
             newPiece();
         }
     }
 
+    // Key command to go do down
     private void oneLineDown() {
 
         if (!tryMove(curPiece, curX, curY - 1)) {
@@ -174,6 +192,7 @@ public class Board extends JPanel {
         }
     }
 
+    // Method to remove a line and add to score when a row is full
     private void removeFullLines() {
 
         int numFullLines = 0;
@@ -207,16 +226,15 @@ public class Board extends JPanel {
 
             numLinesCleared += numFullLines;
 
-//            statusbar.setText(String.valueOf(numLinesCleared));
             isAtBottom = true;
             curPiece.setShape(Tetromino.Shape.NO_SHAPE);
         }
     }
 
+    // Use timer to update and repaint UI
     private class GameCycle implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-
             doGameCycle();
         }
     }
@@ -236,21 +254,19 @@ public class Board extends JPanel {
         }
     }
 
+    // Keyboard inputs
     class TAdapter extends KeyAdapter {
 
         @Override
         public void keyPressed(KeyEvent e) {
 
             if (curPiece.getShape() == Tetromino.Shape.NO_SHAPE) {
-
                 return;
             }
 
             int keycode = e.getKeyCode();
 
-            // Java 12 switch expressions
             switch (keycode) {
-
                 case KeyEvent.VK_LEFT -> tryMove(curPiece, curX - 1, curY);
                 case KeyEvent.VK_RIGHT -> tryMove(curPiece, curX + 1, curY);
                 case KeyEvent.VK_DOWN -> tryMove(curPiece.rotateRight(), curX, curY);
@@ -261,6 +277,7 @@ public class Board extends JPanel {
         }
     }
 
+    // Start method initializes a new board to start the game
     void start() {
 
         curPiece = new Tetromino();
