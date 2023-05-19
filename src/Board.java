@@ -1,9 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
 public class Board extends JPanel {
 
@@ -23,6 +20,7 @@ public class Board extends JPanel {
     private int curY = 0;
     private Tetromino.Shape[] board;
 
+
     // Constructor which initializes the Board with a new game
     public Board(Tetris game) {
         initBoard(game);
@@ -31,7 +29,8 @@ public class Board extends JPanel {
     // Initializes the board
     public void initBoard(Tetris game) {
         setFocusable(true);
-        addKeyListener(new TAdapter());
+        setBackground(new Color(36, 36, 36));
+        addKeyListener(boardKeyListener);
     }
 
     // Gets the height of each block (square)
@@ -46,7 +45,6 @@ public class Board extends JPanel {
 
     // Return 2D array to represent board positions
     private Tetromino.Shape shapeAt(int x, int y) {
-        System.out.println("x: " + x + ", y: " + y);
         return board[(y * BOARD_WIDTH) + x];
     }
 
@@ -86,17 +84,27 @@ public class Board extends JPanel {
     // use Graphics.fillRect() method to paint blocks
     private void drawSquare(Graphics g, int x, int y, Tetromino.Shape shape) {
 
-        g.setColor(Color.RED);
+        Color colors[] = {
+                new Color(252, 119, 119),
+                new Color(232, 159, 95),
+                new Color(250, 245, 115),
+                new Color(112, 217, 74),
+                new Color(70, 171, 176),
+                new Color(54, 118, 191),
+                new Color(122, 57, 191),
+                new Color(242, 141, 219)
+        };
+
+        Color color = colors[shape.ordinal()];
+
+        g.setColor(color);
         g.fillRect(x + 1, y + 1, getSquareWidth() - 2, getSquareHeight() - 2);
 
-        g.setColor(Color.PINK);
+        g.setColor(color.brighter());
         g.drawLine(x, y + getSquareHeight() - 1, x, y);
         g.drawLine(x, y, x + getSquareWidth() - 1, y);
 
-        // TODO: Add more colors
-        g.setColor(Color.BLACK);
-
-        // Draw our grid lines for the board
+        g.setColor(color.brighter());
         g.drawLine(x + 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + getSquareHeight() - 1);
         g.drawLine(x + getSquareWidth() - 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + 1);
     }
@@ -223,7 +231,6 @@ public class Board extends JPanel {
         }
 
         if (numFullLines > 0) {
-
             numLinesCleared += numFullLines;
 
             isAtBottom = true;
@@ -255,27 +262,33 @@ public class Board extends JPanel {
     }
 
     // Keyboard inputs
-    class TAdapter extends KeyAdapter {
-
+    private KeyListener boardKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
+            int keyCode = e.getKeyCode();
 
-            if (curPiece.getShape() == Tetromino.Shape.NO_SHAPE) {
-                return;
-            }
-
-            int keycode = e.getKeyCode();
-
-            switch (keycode) {
-                case KeyEvent.VK_LEFT -> tryMove(curPiece, curX - 1, curY);
-                case KeyEvent.VK_RIGHT -> tryMove(curPiece, curX + 1, curY);
-                case KeyEvent.VK_DOWN -> tryMove(curPiece.rotateRight(), curX, curY);
-                case KeyEvent.VK_UP -> tryMove(curPiece.rotateLeft(), curX, curY);
-                case KeyEvent.VK_SPACE -> dropDown();
-                case KeyEvent.VK_D -> oneLineDown();
+            switch (keyCode) {
+                case KeyEvent.VK_LEFT:
+                    tryMove(curPiece, curX - 1, curY);
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    tryMove(curPiece, curX + 1, curY);
+                    break;
+                case KeyEvent.VK_DOWN:
+                    tryMove(curPiece.rotateRight(), curX, curY);
+                    break;
+                case KeyEvent.VK_UP:
+                    tryMove(curPiece.rotateLeft(), curX, curY);
+                    break;
+                case KeyEvent.VK_SPACE:
+                    dropDown();
+                    break;
+                case KeyEvent.VK_D:
+                    oneLineDown();
+                    break;
             }
         }
-    }
+    };
 
     // Start method initializes a new board to start the game
     void start() {
