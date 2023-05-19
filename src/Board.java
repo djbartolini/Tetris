@@ -8,16 +8,23 @@ public class Board extends JPanel {
     private final int BOARD_WIDTH = 10;
     private final int BOARD_HEIGHT = 20;
 
+    /*
+        Adjust the PERIOD_INTERVAL constant
+        to change the speed at which the blocks fall
+    */
     private final int PERIOD_INTERVAL = 400;
     private Timer timer;
 
-    private boolean isAtBottom = false;
     private int numLinesCleared = 0;
 
-    // Keeps track of the current 'new' piece
+    // Keeps track of the current (newest) piece
     private Tetromino curPiece;
     private int curX = 0;
     private int curY = 0;
+    private boolean isAtBottom = false;
+
+
+    // The board is essentially an array of Tetrominoes
     private Tetromino.Shape[] board;
 
 
@@ -26,11 +33,77 @@ public class Board extends JPanel {
         initBoard(game);
     }
 
-    // Initializes the board
     public void initBoard(Tetris game) {
         setFocusable(true);
         setBackground(new Color(36, 36, 36));
-        addKeyListener(boardKeyListener);
+        initKeyBindings();
+    }
+
+    // Key Bindings
+    private void initKeyBindings() {
+        InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_LEFT,
+                "move left",
+                () -> tryMove(curPiece, curX -1, curY)
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_RIGHT,
+                "move right",
+                () -> tryMove(curPiece, curX + 1, curY)
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_UP,
+                "rotate left",
+                () -> tryMove(curPiece.rotateLeft(), curX, curY)
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_DOWN,
+                "rotate right",
+                () -> tryMove(curPiece.rotateRight(), curX, curY)
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_SPACE,
+                "drop to bottom",
+                this::dropDown
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_D,
+                "drop one line down",
+                this::oneLineDown
+        );
+    }
+
+    private void setupKetBinding(InputMap inputMap, ActionMap actionMap, int keycode, String actionKey, Runnable action) {
+        inputMap.put(KeyStroke.getKeyStroke(keycode, 0), actionKey);
+        actionMap.put(actionKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
+        });
+    }
+
+    public void removeKeyBindings() {
+        InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        inputMap.clear();
+        actionMap.clear();
     }
 
     // Gets the height of each block (square)
@@ -43,7 +116,7 @@ public class Board extends JPanel {
         return (int) getSize().getWidth() / BOARD_WIDTH;
     }
 
-    // Return 2D array to represent board positions
+    // Return array to represent board positions
     private Tetromino.Shape shapeAt(int x, int y) {
         return board[(y * BOARD_WIDTH) + x];
     }
@@ -55,7 +128,7 @@ public class Board extends JPanel {
         drawShape(g);
     }
 
-    // use drawSquare method to assemble our Tetris blocks
+    // use drawSquare method to assemble our Tetromino blocks
     private void drawShape(Graphics g) {
         int boardTop = (int) getSize().getHeight() - BOARD_HEIGHT * getSquareHeight();
 
@@ -95,6 +168,7 @@ public class Board extends JPanel {
                 new Color(242, 141, 219)
         };
 
+        // Use the ordinal value of the Tetromino shape to pick a color from the array above
         Color color = colors[shape.ordinal()];
 
         g.setColor(color);
@@ -109,7 +183,7 @@ public class Board extends JPanel {
         g.drawLine(x + getSquareWidth() - 1, y + getSquareHeight() - 1, x + getSquareWidth() - 1, y + 1);
     }
 
-    // Key command to drop piece 1 block level
+    // Key command to drop piece to the bottom
     private void dropDown() {
         int newY = curY;
 
@@ -175,6 +249,11 @@ public class Board extends JPanel {
         return true;
     }
 
+    /*
+        Method to perform each time a block hits the bottom.
+        This will run the removeFullLines() method or us
+        and triggers a new piece.
+     */
     private void pieceDropped() {
 
         for (int i = 0; i < 4; i++) {
@@ -191,7 +270,7 @@ public class Board extends JPanel {
         }
     }
 
-    // Key command to go do down
+    // Key command to go do down one line
     private void oneLineDown() {
 
         if (!tryMove(curPiece, curX, curY - 1)) {
@@ -200,7 +279,7 @@ public class Board extends JPanel {
         }
     }
 
-    // Method to remove a line and add to score when a row is full
+    // Method to check and remove a line and add to score when a row is full
     private void removeFullLines() {
 
         int numFullLines = 0;
@@ -261,36 +340,12 @@ public class Board extends JPanel {
         }
     }
 
-    // Keyboard inputs
-    private KeyListener boardKeyListener = new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-            int keyCode = e.getKeyCode();
-
-            switch (keyCode) {
-                case KeyEvent.VK_LEFT:
-                    tryMove(curPiece, curX - 1, curY);
-                    break;
-                case KeyEvent.VK_RIGHT:
-                    tryMove(curPiece, curX + 1, curY);
-                    break;
-                case KeyEvent.VK_DOWN:
-                    tryMove(curPiece.rotateRight(), curX, curY);
-                    break;
-                case KeyEvent.VK_UP:
-                    tryMove(curPiece.rotateLeft(), curX, curY);
-                    break;
-                case KeyEvent.VK_SPACE:
-                    dropDown();
-                    break;
-                case KeyEvent.VK_D:
-                    oneLineDown();
-                    break;
-            }
-        }
-    };
-
-    // Start method initializes a new board to start the game
+    /*
+        Start method.
+        Creates our board object.
+        The `newPiece()` method is triggered by the `pieceDropped()`
+        method for subsequent pieces.
+     */
     void start() {
 
         curPiece = new Tetromino();

@@ -27,12 +27,10 @@ public class Tetris extends JFrame {
         menu = new Menu();
         menu.setStartGameListener(this::startGame);
         add(menu);
-        menu.requestFocusAndAddKeyListener();
     }
 
     public void startGame() {
-        menu.setFocusable(false);
-        menu.removeKeyListener();
+        menu.removeKeyBindings();
         remove(menu);
 
         Board board = new Board(this);

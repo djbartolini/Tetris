@@ -9,9 +9,9 @@ public class Tetromino {
         S_SHAPE,
         I_SHAPE,
         T_SHAPE,
-        L_SHAPE,
+        SQUARE_SHAPE,
         REVERSE_L_SHAPE,
-        SQUARE_SHAPE
+        L_SHAPE
     }
 
     private Shape pieceShape;
@@ -23,7 +23,7 @@ public class Tetromino {
         initShape();
     }
 
-    // Initialize a shape using a 3d array to represent its x & y position and its rotation
+    // Define shapes using a 3d array to represent each pieces shape
     private void initShape() {
         // initiate a new shape with size 4 x 2
         coords = new int[4][2];
@@ -70,6 +70,7 @@ public class Tetromino {
     }
 
     public Shape getShape() {
+        System.out.println("Shape: " + pieceShape);
         return pieceShape;
     }
 
@@ -134,6 +135,7 @@ public class Tetromino {
 
         var result = new Tetromino();
         result.pieceShape = pieceShape;
+
 
         for (int i = 0; i < 4; ++i) {
 

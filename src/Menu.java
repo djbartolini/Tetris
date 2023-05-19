@@ -1,6 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -24,10 +25,43 @@ public class Menu extends JPanel {
 
     public void initMenu() {
         setFocusable(true);
+        initKeyBindings();
     }
 
     public void setStartGameListener(StartGameListener listener) {
         this.startGameListener = listener;
+    }
+
+    // Key bindings
+    private void initKeyBindings() {
+        InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_ENTER,
+                "start game",
+                () -> startGameListener.onStartGame()
+        );
+    }
+
+    private void setupKetBinding(InputMap inputMap, ActionMap actionMap, int keycode, String actionKey, Runnable action) {
+        inputMap.put(KeyStroke.getKeyStroke(keycode, 0), actionKey);
+        actionMap.put(actionKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
+        });
+    }
+
+    public void removeKeyBindings() {
+        InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getActionMap();
+
+        inputMap.clear();
+        actionMap.clear();
     }
 
     public void paintComponent(Graphics g) {
@@ -41,6 +75,7 @@ public class Menu extends JPanel {
             throw new RuntimeException(e);
         }
 
+        g2.setBackground(new Color(36, 36, 36));
         g2.drawImage(background, 0, 0, null);
 
         g2.setFont(largeFont);
@@ -61,31 +96,6 @@ public class Menu extends JPanel {
         int smallTextY = 424;
         g2.drawString(smallText, smallTextX, smallTextY);
     }
-
-
-    public void requestFocusAndAddKeyListener() {
-        requestFocusInWindow();  // Request keyboard focus for the panel
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyEventDispatcher);
-    }
-
-    public void removeKeyListener() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyEventDispatcher);
-    }
-
-    private final KeyEventDispatcher keyEventDispatcher = new KeyEventDispatcher() {
-        @Override
-        public boolean dispatchKeyEvent(KeyEvent e) {
-            if (e.getID() == KeyEvent.KEY_PRESSED) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    if (startGameListener != null) {
-                        startGameListener.onStartGame();
-                        return true;  // Consume the ENTER key event
-                    }
-                }
-            }
-            return false;  // Let other components handle the key event
-        }
-    };
 
     public interface StartGameListener {
         void onStartGame();
