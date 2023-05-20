@@ -34,4 +34,5 @@ java -cp target/classes Tetris
 | &#8678; | Move Left           |
 | `D`     | Move Down 1 Line    |
 | `SPACE` | Move Down to bottom |
+| `ENTER` | New Game            |
 
