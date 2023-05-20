@@ -70,7 +70,6 @@ public class Tetromino {
     }
 
     public Shape getShape() {
-        System.out.println("Shape: " + pieceShape);
         return pieceShape;
     }
 

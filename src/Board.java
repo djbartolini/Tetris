@@ -27,6 +27,9 @@ public class Board extends JPanel {
     // The board is essentially an array of Tetrominoes
     private Tetromino.Shape[] board;
 
+    // The status bar at the bottom
+    private JLabel statusbar;
+
 
     // Constructor which initializes the Board with a new game
     public Board(Tetris game) {
@@ -36,6 +39,7 @@ public class Board extends JPanel {
     public void initBoard(Tetris game) {
         setFocusable(true);
         setBackground(new Color(36, 36, 36));
+        statusbar = game.getStatusbar(); // Get status bar from Tetris class
         initKeyBindings();
     }
 
@@ -85,6 +89,13 @@ public class Board extends JPanel {
                 KeyEvent.VK_D,
                 "drop one line down",
                 this::oneLineDown
+        );
+        setupKetBinding(
+                inputMap,
+                actionMap,
+                KeyEvent.VK_ENTER,
+                "start new game",
+                this::start
         );
     }
 
@@ -216,8 +227,7 @@ public class Board extends JPanel {
         if (!tryMove(curPiece, curX, curY)) {
 
             curPiece.setShape(Tetromino.Shape.NO_SHAPE);
-
-//            var msg = String.format("Game over. Score: %d", 0);
+            statusbar.setText("Score: " + numLinesCleared + " | Press `ENTER` to play again!");
         }
     }
 
@@ -280,9 +290,10 @@ public class Board extends JPanel {
     }
 
     // Method to check and remove a line and add to score when a row is full
+    // Add to score when we successfully remove a line
     private void removeFullLines() {
 
-        int numFullLines = 0;
+        int score = 0;
 
         for (int i = BOARD_HEIGHT - 1; i >= 0; i--) {
 
@@ -299,7 +310,7 @@ public class Board extends JPanel {
 
             if (lineIsFull) {
 
-                numFullLines++;
+                score++;
 
                 for (int k = i; k < BOARD_HEIGHT - 1; k++) {
                     for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -309,15 +320,16 @@ public class Board extends JPanel {
             }
         }
 
-        if (numFullLines > 0) {
-            numLinesCleared += numFullLines;
+        if (score > 0) {
+            numLinesCleared += score;
 
+            statusbar.setText("Score: " + numLinesCleared);
             isAtBottom = true;
             curPiece.setShape(Tetromino.Shape.NO_SHAPE);
         }
     }
 
-    // Use timer to update and repaint UI
+    // GameCycle timer arg to update and repaint UI
     private class GameCycle implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -340,17 +352,26 @@ public class Board extends JPanel {
         }
     }
 
-    /*
-        Start method.
-        Creates our board object.
-        The `newPiece()` method is triggered by the `pieceDropped()`
-        method for subsequent pieces.
-     */
+    // This resets our timer for each game
+    // and obviously resets the score
+    private void clearScore() {
+        if (timer != null) {
+            timer.stop();
+        }
+        numLinesCleared = 0;
+    }
+
+
+    // Start method.
+    // Creates our board object.
+    // The `newPiece()` method is triggered by the
+    // `pieceDropped()` method for subsequent pieces.
     void start() {
 
         curPiece = new Tetromino();
         board = new Tetromino.Shape[BOARD_WIDTH * BOARD_HEIGHT];
 
+        clearScore();
         clearBoard();
         newPiece();
 
